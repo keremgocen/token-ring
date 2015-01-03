@@ -1,4 +1,4 @@
-package com.kerem.distributed.tokenring;
+package com.kerem.dist.tokenring;
 
 //    Token-ring algorithm
 

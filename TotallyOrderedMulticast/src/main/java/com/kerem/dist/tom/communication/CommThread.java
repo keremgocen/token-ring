@@ -16,6 +16,15 @@ public class CommThread implements Runnable {
 	private String serverName;
 	//the port of the server to connect to
 	private int portNumber;
+	// get instance of the communication queue
+	private static final MulticastOrganizerQueue commQueue = MulticastOrganizerQueue.INSTANCE;
+
+	/*
+	 * multicast message definitions
+	 */
+	private static final String TOM_MSG_ADD_SUCCESS = "MSG_SUCCESS";
+	private static final String TOM_MSG_ADD_FAIL = "MSG_FAIL";
+	private static final String TOM_KILL_ALL = "MSG_KILL_ALL";
 
     public CommThread(String serverName, int portNumber) {
         this.serverName = serverName;
@@ -52,16 +61,21 @@ public class CommThread implements Runnable {
 		 * Upon receipt of message, server will respond: "You said: " + message
 		 * This continues for 3 rounds.
 		 */
+		
+		System.out.println("Starting up comm thread on port:" + portNumber);
 
 		/*
 		 * SEND receive message
 		 */
+		
+		// TODO periodically check queue and send message on top if exists
+		
 		Scanner input = new Scanner(System.in);
 
 		int i = 0;
 
-		while(i < 100) {
-			System.out.println("Round (" + (i+1) + ")");
+		while(true) {
+			System.out.println("Round (" + (i++) + ")");
 			System.out.print("Type a message to be sent to the server: ");
 			String message = input.nextLine();
 			socketOut.println(message);
@@ -69,6 +83,16 @@ public class CommThread implements Runnable {
 			String response = null;
 			try {
 				response = socketIn.readLine();
+				if(response.equals(TOM_MSG_ADD_SUCCESS)) {
+					System.out.println("Server ACK received on client:" + clientSocket.getInetAddress());
+					
+					// TODO run logic
+					commQueue.displayQueue();
+				} else if(response.equals(TOM_MSG_ADD_FAIL)) {
+					System.out.println("Server ACK failed on client:" + clientSocket.getInetAddress());
+				} else if(response.equals(TOM_KILL_ALL)) {
+					break;
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -1,4 +1,4 @@
-package com.kerem.distributed.tokenring;
+package com.kerem.dist.tokenring;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,9 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Logger;
 
 /**
  * Created by keremgocen on 12/22/14.

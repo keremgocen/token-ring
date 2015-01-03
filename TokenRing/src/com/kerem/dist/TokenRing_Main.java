@@ -1,6 +1,6 @@
-package com.kerem.distributed;
+package com.kerem.dist;
 
-import com.kerem.distributed.tokenring.TokenRingGenerator;
+import com.kerem.dist.tokenring.TokenRingGenerator;
 
 public class TokenRing_Main {
 
