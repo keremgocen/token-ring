@@ -1,6 +1,8 @@
-import com.kerem.distributed.TokenRingGenerator;
+package com.kerem.distributed;
 
-public class Main {
+import com.kerem.distributed.tokenring.TokenRingGenerator;
+
+public class TokenRing_Main {
 
     public static void main(String[] args) {
         System.out.println("Starting up token-ring simulator...");

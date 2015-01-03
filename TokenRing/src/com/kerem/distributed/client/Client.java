@@ -1,6 +1,6 @@
 //package com.kerem.distributed.client;
 //
-//import com.kerem.distributed.TokenRingGenerator;
+//import com.kerem.distributed.tokenring.TokenRingGenerator;
 //
 //import java.io.BufferedReader;
 //import java.io.IOException;

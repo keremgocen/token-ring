@@ -1,4 +1,4 @@
-package com.kerem.distributed;
+package com.kerem.distributed.tokenring;
 
 //    Token-ring algorithm
 
@@ -12,11 +12,7 @@ package com.kerem.distributed;
 //    If yes, access resource
 //    Hold token until done
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created by keremgocen on 12/22/14.
