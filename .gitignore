@@ -19,3 +19,6 @@ hs_err_pid*
 
 # Mac
 .DS_Store
+
+# Output dir
+out/
