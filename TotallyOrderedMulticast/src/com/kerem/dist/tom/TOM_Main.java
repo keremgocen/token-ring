@@ -11,7 +11,12 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 
-///Users/keremgocen/Blesh/git-repos/token-ring/TotallyOrderedMulticast/src/com/kerem/dist/tom/config/process_1_conf
+/*
+• Every process has an ID number. IDs start at 0 and are increment by 1 for each new process.
+• Total ordering of the processes is based on these ID numbers.
+• Every process will start executing with its own configuration file.
+• Queue contents will be displayed on the console/screen upon each event.
+ */
 
 public class TOM_Main {
 
@@ -70,22 +75,11 @@ public class TOM_Main {
 
         System.out.println("Starting up process with id:" + config.getProcessId() + " on port:" + port);
 
-        // create a map where key is the pid and value is a socket to a process we will communicate through
-//        final HashMap<Integer, Socket> multicastMap = new HashMap<>();
-
         // connect to the rest of the processes with lower pid
         for(int k = 0; k < totalProcessCount; k++) {
             if(k < pid) {
                 CommThread commThread = new CommThread(serverName, portList.get(k));
                 new Thread(commThread).start();
-
-//                final Socket commSocket = retrieveSocketFromProcess(serverName, portList.get(k));
-//
-//                if(commSocket != null) {
-//                    multicastMap.put(k, commSocket);
-//                } else {
-//                    System.out.println("Failed to connect to process pid:" + k + " on port:" + portList.get(k));
-//                }
             }
         }
 
@@ -102,36 +96,5 @@ public class TOM_Main {
         }
 
     }
-
-//    /**
-//     * Returns a communication socket from the target process on the specified port.
-//     * A null socket object is returned if failed.
-//     *
-//     * @param   portNumber      the port target process is running on
-//     * @return  Socket          Socket object for communication
-//     */
-//    private static Socket retrieveSocketFromProcess(String serverName, Integer portNumber) {
-//        Socket commSocket = null;
-//
-//        try {
-//			//create socket and connect to the server
-//            commSocket = new Socket(serverName, portNumber);
-//        } catch (UnknownHostException e) { //if serverName cannot be resolved to an address
-//			System.out.println("Who is " + serverName + "?");
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			System.out.println("Cannot get I/O for the connection.");
-//			e.printStackTrace();
-//		}
-//
-//        return commSocket;
-//    }
+    
 }
-
-/*
-• You will code in Java using socket programming. Processes will be executing on the local host.
-• Every process has an ID number. IDs start at 0 and are increment by 1 for each new process.
-• Total ordering of the processes is based on these ID numbers.
-• Every process will start executing with its own configuration file.
-• Queue contents will be displayed on the console/screen upon each event.
- */
