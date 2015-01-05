@@ -3,6 +3,9 @@ package com.kerem.dist.tom;
 import com.kerem.dist.tom.communication.CommThread;
 import com.kerem.dist.tom.model.ProcessConfigModel;
 import com.kerem.dist.tom.server.ServerThread;
+import com.kerem.dist.tom.util.BlockingConsoleLogger;
+import com.kerem.dist.tom.util.LocalLamportClock;
+import com.kerem.dist.tom.util.MessageGeneratorThread;
 import com.kerem.dist.tom.util.ProcessConfigParser;
 
 import java.util.List;
@@ -24,15 +27,15 @@ public class TOM_Main {
         ProcessConfigParser configParser = new ProcessConfigParser();
 
         // debug command line argument
-        System.out.println("received args[0]:" + args[0]);
+        BlockingConsoleLogger.INSTANCE.println("received args[0]:" + args[0]);
 
         ProcessConfigModel processConfigModel = configParser.readConfigFile(args[0]);
         if(processConfigModel != null) {
-            System.out.println("Processed config file:" + args[0] + " as:" + processConfigModel.toString());
+            BlockingConsoleLogger.INSTANCE.println("Processed config file:" + args[0] + " as:" + processConfigModel.toString());
 
             initialize(processConfigModel);
         } else {
-            System.out.println("Failed to start up process...");
+            BlockingConsoleLogger.INSTANCE.println("Failed to start up process...");
         }
     }
 
@@ -65,16 +68,20 @@ public class TOM_Main {
             totalProcessCount = config.getTotalNumberOfProcesses();
         } catch (NullPointerException e){
             e.printStackTrace();
-            System.out.println("Failed to get config parameters!");
+            BlockingConsoleLogger.INSTANCE.println("Failed to get config parameters!");
             return;
         }
 
-        System.out.println("Starting up process with id:" + config.getProcessId() + " on port:" + port);
+        // start lamport clock
+        LocalLamportClock.INSTANCE.setProcessId(pid, totalProcessCount);
+        new Thread(LocalLamportClock.INSTANCE).start();
+
+        BlockingConsoleLogger.INSTANCE.println("Starting up process with id:" + config.getProcessId() + " on port:" + port);
 
         // connect to the rest of the processes with lower pid
         for(int k = 0; k < totalProcessCount; k++) {
             if(k < pid) {
-                CommThread commThread = new CommThread(serverName, portList.get(k));
+                CommThread commThread = new CommThread(serverName, portList.get(k), k);
                 new Thread(commThread).start();
             }
         }
@@ -84,12 +91,20 @@ public class TOM_Main {
         totalProcessCount -= (pid + 1);
 
         if(totalProcessCount > 1) {
-            System.out.println("Opening up a server socket, number of remaining connections:" + totalProcessCount);
+            BlockingConsoleLogger.INSTANCE.println("Opening up a server socket, number of remaining connections:" + totalProcessCount);
 
             // open up a server socket and wait for connection from other processes until all is connected
             ServerThread serverThread = new ServerThread(pid, port, totalProcessCount);
             new Thread(serverThread).start();
         }
+        
+        // TODO add command line argument to start this tool conditionally
+        if(pid == 1) {
+            // start message generator command line tool
+            MessageGeneratorThread messageGenerator = new MessageGeneratorThread(pid);
+            new Thread(messageGenerator).start();
+        }
+
 
     }
     

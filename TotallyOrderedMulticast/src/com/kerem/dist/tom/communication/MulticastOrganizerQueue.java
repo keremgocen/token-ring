@@ -1,9 +1,9 @@
 package com.kerem.dist.tom.communication;
 
 import com.kerem.dist.tom.model.MulticastMessageModel;
+import com.kerem.dist.tom.util.BlockingConsoleLogger;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
@@ -12,24 +12,19 @@ import java.util.concurrent.PriorityBlockingQueue;
 public enum MulticastOrganizerQueue {
     INSTANCE;
     
-    private static final PriorityBlockingQueue<MulticastMessageModel> messageQueue = new PriorityBlockingQueue<MulticastMessageModel>(0, new Comparator<MulticastMessageModel>() {
-        @Override
-        public int compare(MulticastMessageModel o1, MulticastMessageModel o2) {
-            return o1.getLamportClock().compareTo(o2.getLamportClock());
-        }
-    });
+    private static final PriorityBlockingQueue<MulticastMessageModel> messageQueue = new PriorityBlockingQueue<MulticastMessageModel>();
 
     private MulticastOrganizerQueue() {
-        System.out.println("MulticastOrganizerQueue constructor");
+        BlockingConsoleLogger.INSTANCE.println("MulticastOrganizerQueue constructor");
     }
     
-    public synchronized static boolean addMessage(final MulticastMessageModel message) {
+    public synchronized static boolean addMessage(final MulticastMessageModel message) throws Exception{
         synchronized (messageQueue) {
-            return messageQueue.add(message);
+            return messageQueue.offer(message);
         }
     }
 
-    public synchronized static MulticastMessageModel peekMessage(int messageIndex) {
+    public synchronized static MulticastMessageModel peekMessage() {
         synchronized (messageQueue) {
             return messageQueue.peek();
         }
@@ -45,22 +40,6 @@ public enum MulticastOrganizerQueue {
         synchronized (messageQueue) {
             
             // TODO create message delivery control mechanism
-            
-//            boolean messageRemoved = false;
-//            boolean messageFound = false;
-//            MulticastMessageModel msgToDeliver;
-            
-//            while (messageQueue.iterator().hasNext()) {
-//                msgToDeliver = messageQueue.iterator().next();
-//                if(msgToDeliver.equals(message)) {
-//                    messageFound = true;
-//                    break;
-//                }
-//            }
-            
-//            if(messageFound == true) {
-//                messageRemoved = messageQueue.remove(message);
-//            }
             
             if(messageQueue.contains(message)) {
                 return messageQueue.remove(message);
@@ -85,7 +64,7 @@ public enum MulticastOrganizerQueue {
 
     public synchronized static void displayQueue() {
         synchronized (messageQueue) {
-            System.out.println("queue content:" + Arrays.asList(messageQueue).toString());
+            BlockingConsoleLogger.INSTANCE.println("\nqueue content:" + Arrays.asList(messageQueue).toString());
         }
     }
 }
