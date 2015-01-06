@@ -33,18 +33,21 @@ public class MessageGeneratorThread implements Runnable{
         
 		while(!closeUp) {
 
-            BlockingConsoleLogger.INSTANCE.println("\nType message content:");
+            BlockingConsoleLogger.INSTANCE.println("Time now:" + LocalLamportClock.INSTANCE.getClock() + "\nType message content:");
 			
 			String message = input.nextLine();
             
 			if(message.equals(MulticastMessageModel.TOM_KILL_ALL)) {
                 closeUp = true;
             } else {
+                String array[] = message.split("|");
+                String messageBody = array[0];
+                String clock = array[1];
                 // generate message and add it to queue
                 MulticastMessageModel messageModel = new MulticastMessageModel(4);
-                messageModel.setContent(message);
+                messageModel.setContent(messageBody);
                 messageModel.setSenderId(senderId);
-                messageModel.setLamportClock(LocalLamportClock.INSTANCE.getClock());
+                messageModel.setLamportClock(clock);
                 
                 BlockingConsoleLogger.INSTANCE.println("Create message:" + messageModel.toString());
 

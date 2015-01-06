@@ -49,6 +49,26 @@ public enum MulticastOrganizerQueue {
             return false;
         }
     }
+
+    // assuming timestamp is unique for all messages
+    public synchronized static boolean updateMessageAck(final String timeStamp, final int ackIndex) {
+        synchronized (messageQueue) {
+            while(messageQueue.iterator().hasNext()) {
+                MulticastMessageModel message = messageQueue.iterator().next();
+                if(message.getLamportClock().equals(timeStamp)) {
+                    BlockingConsoleLogger.INSTANCE.println("\nQUEUE STATE 1");
+                    MulticastOrganizerQueue.INSTANCE.displayQueue();
+                    BlockingConsoleLogger.INSTANCE.println("Found message with TS:" + timeStamp + ". Updating ACK array");
+                    message.getAckArray()[ackIndex] = true;
+                    BlockingConsoleLogger.INSTANCE.println("Updated ACK for message:" + message.toString() + " at index:" + ackIndex);
+                    BlockingConsoleLogger.INSTANCE.println("\nQUEUE STATE 2");
+                    MulticastOrganizerQueue.INSTANCE.displayQueue();
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
     
     public synchronized static int getQueueSize() {
         synchronized (messageQueue) {

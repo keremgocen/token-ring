@@ -81,7 +81,7 @@ public class TOM_Main {
         // connect to the rest of the processes with lower pid
         for(int k = 0; k < totalProcessCount; k++) {
             if(k < pid) {
-                CommThread commThread = new CommThread(serverName, portList.get(k), k);
+                CommThread commThread = new CommThread(serverName, portList.get(k), pid);
                 new Thread(commThread).start();
             }
         }

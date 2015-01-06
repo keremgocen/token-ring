@@ -71,105 +71,114 @@ public class CommThread implements Runnable {
 		MulticastOrganizerQueue.displayQueue();
 
 		int i = 0;
+		
+		try {
 
-		while(true) {
+			while (true) {
 
-			MulticastMessageModel message = null;
-			try {
-				// peek top of queue for existing message
-				message = MulticastOrganizerQueue.peekMessage();
-				
-				message.getAckArray()[processId] = true;
-				
-				
-				if(message == null) {
-					continue;
-				} else {
-					BlockingConsoleLogger.println(processId + "-after mark");
-					MulticastOrganizerQueue.displayQueue();
-					
-					BlockingConsoleLogger.println(processId + "-message found in queue!");
-					
-					// check ACK array for delivery confirmation
-					boolean abortDelivery = false;
-					for(Boolean deliver : message.getAckArray()) {
-						if(!deliver)
-							abortDelivery = true;
+				MulticastMessageModel message = null;
+				try {
+					// peek top of queue for existing message
+					message = MulticastOrganizerQueue.peekMessage();
+
+					if (message == null) {
+						continue;
+					} else {
+						//					BlockingConsoleLogger.println(processId + "-after mark");
+						//					MulticastOrganizerQueue.displayQueue();
+						//					
+						//					BlockingConsoleLogger.println(processId + "-message found in queue!");
+						//					
+						//					// check ACK array for delivery confirmation
+						//					boolean abortDelivery = false;
+						//					for(Boolean deliver : message.getAckArray()) {
+						//						if(!deliver)
+						//							abortDelivery = true;
+						//					}
+						//
+						//					if(!abortDelivery) {
+						//						if(MulticastOrganizerQueue.deliverMessage(message)) {
+						//							BlockingConsoleLogger.println(processId + "-MESSAGE DELIVERED. message:" + message.toString());
+						//							MulticastOrganizerQueue.displayQueue();
+						//						} else {
+						//							BlockingConsoleLogger.println(processId + "-MESSAGE DELIVERY FAILED!");
+						//						}
+						//						continue;
+						//					}
+
+
+						// TODO put control for avoiding excessive broadcast to same process
+						if(message.getAckArray()[processId] != true) {
+							// mark with own process id and broadcast message
+							message.setSenderId(processId);
+							socketOut.println(MessageDeserializer.createStringFromMessage(message));
+
+							// self ACK
+							commQueue.updateMessageAck(message.getLamportClock(), processId);
+						} else {
+							continue;
+						}
 					}
 
-					if(!abortDelivery) {
-						if(MulticastOrganizerQueue.deliverMessage(message)) {
-							BlockingConsoleLogger.println(processId + "-MESSAGE DELIVERED. message:" + message.toString());
-							MulticastOrganizerQueue.displayQueue();
-						} else {
-							BlockingConsoleLogger.println(processId + "-MESSAGE DELIVERY FAILED!");
-						}
+				} catch (Exception e) {
+					if (message == null) {
 						continue;
 					}
-
-					// mark with own process id and broadcast message
-					message.setSenderId(processId);
-					socketOut.println(MulticastMessageModel.TOM_MSG_CONTENT + "|" + MessageDeserializer.createStringFromMessage(message));
-				}
-				
-			} catch (Exception e) {
-				if(message == null) {
-					continue;
-				}
-				e.printStackTrace();
-			}
-
-			BlockingConsoleLogger.println(processId + "-Message sent, waiting for the server's response. message:" + message.toString());
-			
-			String responseString = null;
-			try {
-				responseString = socketIn.readLine();
-				ResponseModel responseModel = null;
-				try {
-					responseModel = ResponseDeserializer.responseFromString(responseString);
-					BlockingConsoleLogger.println(processId + "-received responseModel:" + responseModel);
-				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				
-				if(responseModel.getMessageType().equals(MulticastMessageModel.TOM_MSG_ACK)) {
-					BlockingConsoleLogger.println(processId + "-server ACK received on client:" + clientSocket.getInetAddress());
-					
-					receiverId = responseModel.getSenderId();
-					
-					// record ack received for sender
-					message.getAckArray()[receiverId] = true;
-					
-					MulticastOrganizerQueue.displayQueue();
-					
-					// respond with ACK
-					socketOut.println(MulticastMessageModel.TOM_MSG_ACK + "|" + processId);
 
-				} else if(responseModel.getMessageType().equals(MulticastMessageModel.TOM_KILL_ALL)) {
-					break;
+				BlockingConsoleLogger.println(processId + "-Message sent, waiting for the server's response. message:" + message.toString());
+
+				String responseString = null;
+				try {
+					responseString = socketIn.readLine();
+					MulticastMessageModel receivedMessage = null;
+					try {
+						receivedMessage = MessageDeserializer.createMessageFromString(responseString);
+						BlockingConsoleLogger.println(processId + "-received message:" + receivedMessage);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+					if (receivedMessage != null) {
+						receiverId = receivedMessage.getSenderId();
+						
+						BlockingConsoleLogger.println(processId + "-server ACK received on client:" + clientSocket.getInetAddress() + " from process:" + receiverId);
+
+						// record ACK received for sender
+						commQueue.updateMessageAck(receivedMessage.getLamportClock(), receiverId);
+
+						// respond with ACK
+						receivedMessage.setSenderId(processId);
+						socketOut.println(MessageDeserializer.createStringFromMessage(receivedMessage));
+
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
+
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			BlockingConsoleLogger.println(processId + "-terminating comm thread on client:" + clientSocket.getInetAddress());
+
+			LocalLamportClock.setStopClock();
+
+			//close all streams
+			socketOut.close();
+			try {
+				socketIn.close();
+				clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
-
-		BlockingConsoleLogger.println(processId + "-terminating comm thread on client:" + clientSocket.getInetAddress());
-
-		LocalLamportClock.setStopClock();
 		
-		//close all streams
-		socketOut.close();
-		try {
-			socketIn.close();
-			clientSocket.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
     }
 }
